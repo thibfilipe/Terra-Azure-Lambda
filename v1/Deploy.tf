@@ -23,7 +23,7 @@ resource "azurerm_resource_group" "RSG-Lambda" {
 resource "azurerm_cosmosdb_account" "CosmosDB-Lambda" {
   name                = "${var.CosmosName}"
   location            = "${var.AzureRegion}"
-  resource_group_name = "${var.RSGName}"
+  resource_group_name = "${azurerm_resource_group.RSG-Lambda.name}"
   offer_type          = "Standard"
 
   consistency_policy {
@@ -51,7 +51,7 @@ resource "azurerm_virtual_network" "VN-LambdaVM" {
 # Create Subnet
 resource "azurerm_subnet" "Subnet-LambdaVM" {
   name                 = "${var.SubnetName}"
-  resource_group_name  = "${var.RSGName}"
+  resource_group_name  = "${azurerm_resource_group.RSG-Lambda.name}"
   virtual_network_name = "${var.VnetName}"
   address_prefix       = "${var.AddressPrefix}"
 }
@@ -60,7 +60,7 @@ resource "azurerm_subnet" "Subnet-LambdaVM" {
 resource "azurerm_public_ip" "PublicIP-LambdaVM" {
   name                         = "${var.PublicIPName}"
   location                     = "${var.AzureRegion}"
-  resource_group_name          = "${var.RSGName}"
+  resource_group_name          = "${azurerm_resource_group.RSG-Lambda.name}"
   public_ip_address_allocation = "dynamic"
 }
 
@@ -68,7 +68,7 @@ resource "azurerm_public_ip" "PublicIP-LambdaVM" {
 resource "azurerm_network_security_group" "NSG-LambdaVM" {
   name                = "${var.NSGName}"
   location            = "${var.AzureRegion}"
-  resource_group_name = "${var.RSGName}"
+  resource_group_name = "${azurerm_resource_group.RSG-Lambda.name}"
 
   security_rule {
     name                       = "SSH"
@@ -87,7 +87,7 @@ resource "azurerm_network_security_group" "NSG-LambdaVM" {
 resource "azurerm_network_interface" "NetworkInterface-LambdaVM" {
   name                      = "${var.NetworkInterfaceName}"
   location                  = "${var.AzureRegion}"
-  resource_group_name       = "${var.RSGName}"
+  resource_group_name       = "${azurerm_resource_group.RSG-Lambda.name}"
   network_security_group_id = "${azurerm_network_security_group.NSG-LambdaVM.id}"
 
   ip_configuration {
@@ -101,7 +101,7 @@ resource "azurerm_network_interface" "NetworkInterface-LambdaVM" {
 # Create storage account for boot diagnostics
 resource "azurerm_storage_account" "StorageAccount-LambdaVM" {
   name                     = "${var.StorageAccountName}"
-  resource_group_name      = "${var.RSGName}"
+  resource_group_name      = "${azurerm_resource_group.RSG-Lambda.name}"
   location                 = "${var.AzureRegion}"
   account_tier             = "Standard"
   account_replication_type = "LRS"
@@ -111,7 +111,7 @@ resource "azurerm_storage_account" "StorageAccount-LambdaVM" {
 resource "azurerm_virtual_machine" "VM-LambdaVM" {
   name                  = "${var.VMName}"
   location              = "${var.AzureRegion}"
-  resource_group_name   = "${var.RSGName}"
+  resource_group_name   = "${azurerm_resource_group.RSG-Lambda.name}"
   network_interface_ids = ["${azurerm_network_interface.NetworkInterface-LambdaVM.id}"]
   vm_size               = "Standard_D1_v2"
 
@@ -293,15 +293,11 @@ resource "azurerm_template_deployment" "Template-LambdaSpark" {
 DEPLOY
 
   parameters {
-    # "defaultStorageAccount" = "${var.SparkClusterStorageAccountName}"
     "clusterName" = "${var.SparkClusterName}"
     "clusterLoginUserName" = "${var.SparkClusterLogin}"
     "clusterLoginPassword" = "${var.SparkClusterPassword}"
     "sshUserName" = "${var.SparkClusterSSHUsername}"
     "sshPassword" = "${var.SparkClusterSSHPassword}"
-    
-    # "name":"[uniqueString(resourceGroup().id)]",
-    # "[uniqueString(resourceGroup().id)]"
   }
   deployment_mode = "Incremental"
 }
