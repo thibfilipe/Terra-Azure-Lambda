@@ -41,7 +41,7 @@ resource "azurerm_cosmosdb_account" "CosmosDB-Lambda" {
 ######################################################################
 
 # Create Virtual Network
-resource "azurerm_virtual_network" "VN-LambdaVM" {
+resource "azurerm_virtual_network" "VNet-LambdaVM" {
   name                = "${var.VnetName}"
   address_space       = "${var.AddressSpace}"
   location            = "${var.AzureRegion}"
@@ -52,7 +52,7 @@ resource "azurerm_virtual_network" "VN-LambdaVM" {
 resource "azurerm_subnet" "Subnet-LambdaVM" {
   name                 = "${var.SubnetName}"
   resource_group_name  = "${azurerm_resource_group.RSG-Lambda.name}"
-  virtual_network_name = "${var.VnetName}"
+  virtual_network_name = "${azurerm_virtual_network.VNet-LambdaVM.name}"
   address_prefix       = "${var.AddressPrefix}"
 }
 
@@ -299,5 +299,6 @@ DEPLOY
     "sshUserName" = "${var.SparkClusterSSHUsername}"
     "sshPassword" = "${var.SparkClusterSSHPassword}"
   }
+  
   deployment_mode = "Incremental"
 }
